@@ -42,8 +42,86 @@ do
             --output text
             )
             echo " Launched Instance ID: $INSTANCE_ID"
+
+            #update Route53 record
+            if [ $instance == "frontend" ]; then
+            IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --output text
+            )
+            R53_RECORD="$DOMAIN_NAME"
+            else
+                IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID \
+                --query 'Reservations[*].Instances[*].PrivateIpAddress' \
+                --output text
+                )
+                R53_RECORD="$instance.$DOMAIN_NAME"
+            fi
+
+            aws route53 change-resource-record-sets \
+                --hosted-zone-id $ZONE_ID \
+                --change-batch '
+                    {
+                        "Comment": "Updating the A record for the subdomain",
+                        "Changes": [
+                                {
+                                "Action": "UPSERT",
+                                "ResourceRecordSet": {
+                                    "Name": "'$R53_RECORD'",
+                                    "Type": "A",
+                                    "TTL": 1,
+                                    "ResourceRecords": [
+                                        {
+                                            "Value": "'$IP'"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                '
+                echo "Updated Route53 record for: $instance"
         else
             echo "roboshop-$instance already running: $INSTANCE_ID"
         fi
+
+        #if already instance running, again we are updating the route53 records
+        if [ $instance == "frontend" ]; then
+            IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --output text
+            )
+            R53_RECORD="$DOMAIN_NAME"
+            else
+                IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID \
+                --query 'Reservations[*].Instances[*].PrivateIpAddress' \
+                --output text
+                )
+                R53_RECORD="$instance.$DOMAIN_NAME"
+            fi
+
+            aws route53 change-resource-record-sets \
+                --hosted-zone-id $ZONE_ID \
+                --change-batch '
+                    {
+                        "Comment": "Updating the A record for the subdomain",
+                        "Changes": [
+                                {
+                                "Action": "UPSERT",
+                                "ResourceRecordSet": {
+                                    "Name": "'$R53_RECORD'",
+                                    "Type": "A",
+                                    "TTL": 1,
+                                    "ResourceRecords": [
+                                        {
+                                            "Value": "'$IP'"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                '
+                echo "Updated Route53 record for existing: $instance"
     fi
 done
