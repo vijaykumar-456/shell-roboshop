@@ -128,7 +128,7 @@ do
                 echo "$instance already destroyed, nothing to do..."
             else
                 aws ec2 terminate-instances --instance-ids $INSTANCE_ID
-                echo "Terminating instance: $instance
+                echo "Terminating instance: $instance"
             fi
     fi
 done
