@@ -1,0 +1,46 @@
+To-Launch Instance:
+-------------------
+aws ec2 run-instances \
+    --image-id ami-0220d79f3f480ecf5 \
+    --instance-type t3.micro \
+    --security-groups roboshop-common \
+	--tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Test}]' \
+	--query 'Instances[0].InstanceId' \
+    --output text
+
+To get the IPs of Instance:
+----------------------------
+aws ec2 describe-instances \
+    --instance-ids i-038a6a9cf982f8cf7 \
+    --query "Reservations[0].Instances[0].{PublicIP: PublicIpAddress, PrivateIP: PrivateIpAddress}" \
+    --output table
+
+aws describe instance filter with name and status:
+---------------------------------------------------
+aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=my-instance-name" \
+              "Name=instance-state-name,Values=running"
+
+aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=Shell" "Name=instance-state-name,Values=running" \
+    --query "Reservations[0].Instances[0].{InstanceId:InstanceId,Name:Tags[?Key=='Name']|[0].Value,Status:State.Name}" \
+    --output table
+
+aws ec2 describe-instances --filters "Name=tag:Name,Values=shell" "Name=instance-state-name,Values=running" --query "Reservations[0].Instance[0].InstanceId" --output text
+
+aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=shell" "Name=instance-state-name,Values=running" \
+    --query "Reservations[*].Instances[*].InstanceId" \
+    --output text
+
+
+
+
+
+
+
+
+
+
+
+
