@@ -36,41 +36,40 @@ VALIDATE(){
     fi
 }
 
-dnf install python3 gcc python3-devel -y &>>LOG_FILE
-VALIDATE $? "Installing maven"
+dnf install python3 gcc python3-devel -y &>>$LOGS_FILE
+VALIDATE $? "Installing Python"
 
-id roboshop &>> $LOG_FILE
+id roboshop &>>$LOGS_FILE
 if [ $? -ne 0 ]; then
-    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOG_FILE
+    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOGS_FILE
     VALIDATE $? "Creating roboshop system user"
 else
-    echo -e "$R User Already present with this name $N ... $Y SKIPPING $N"
+    echo -e "System user roboshop already created ... $Y SKIPPING $N"
 fi
 
 rm -rf /app
-VALIDATE $? "Removing Existing app/code"
+VALIDATE $? "Removing existing code"
 
 rm -rf /tmp/payment.zip
-VALIDATE $? "Removing Exisiting payment"
+VALIDATE $? "Removed payment zip"
 
-mkdir -p /app &>> $LOG_FILE
-VALIDATE $? "Creating app folder for code"
+mkdir -p /app  &>>$LOGS_FILE
+VALIDATE $? "Creating app directory"
 
-curl -o /tmp/payment.zip https://roboshop-artifacts.s3.amazonaws.com/payment-v3.zip  &>>$LOG_FILE
-cd /app
-unzip /tmp/payment.zip &>>$LOG_FILE
-VALIDATE $? "Unzipping the payment code"
+curl -o /tmp/payment.zip https://roboshop-artifacts.s3.amazonaws.com/payment-v3.zip  &>>$LOGS_FILE
+cd /app 
+unzip /tmp/payment.zip &>>$LOGS_FILE
+VALIDATE $? "Downloaded and extracted payment code"
 
-pip3 install -r requirement.txt &>> $LOG_FILE
-VALIDATE $? "Installing python dependencies"
-
+pip3 install -r requirements.txt  &>>$LOGS_FILE
+VALIDATE $? "Installing dependencies"
 
 cp $SCRIPT_DIR/payment.service /etc/systemd/system/payment.service
-VALIDATE $? "Creating systemctl service"
+VALIDATE $? "Created systemctl service"
 
-systemctl enable payment
+systemctl enable payment 
 systemctl restart payment
-VALIDATE $? "Enabling and restarting the payment"
+VALIDATE $? "Enable and restarted payment"
 
 
 
