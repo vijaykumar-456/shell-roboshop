@@ -36,57 +36,54 @@ VALIDATE(){
     fi
 }
 
-dnf install maven -y &>>LOG_FILE
-VALIDATE $? "Installing maven"
+dnf install maven -y &>>$LOGS_FILE
+VALIDATE $? "Installing Maven"
 
-id roboshop &>> $LOG_FILE
+id roboshop &>>$LOGS_FILE
 if [ $? -ne 0 ]; then
-    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOG_FILE
+    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOGS_FILE
     VALIDATE $? "Creating roboshop system user"
 else
-    echo -e "$R User Already present with this name $N ... $Y SKIPPING $N"
+    echo -e "System user roboshop already created ... $Y SKIPPING $N"
 fi
 
 rm -rf /app
-VALIDATE $? "Removing Existing app/code"
+VALIDATE $? "Removing existing code"
 
 rm -rf /tmp/shipping.zip
-VALIDATE $? "Removing Exisiting shipping"
+VALIDATE $? "Removed shipping zip"
 
-mkdir -p /app &>> $LOG_FILE
-VALIDATE $? "Creating app folder for code"
+mkdir -p /app  &>>$LOGS_FILE
+VALIDATE $? "Creating app directory"
 
-curl -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip  &>>$LOG_FILE
-cd /app
-unzip /tmp/shipping.zip &>>$LOG_FILE
-VALIDATE $? "Unzipping the shipping code"
+curl -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip  &>>$LOGS_FILE
+cd /app 
+unzip /tmp/shipping.zip &>>$LOGS_FILE
+VALIDATE $? "Downloaded and extracted shipping code"
 
-mvn clean package &>> $LOG_FILE
-mv target/shipping-1.0.jar shipping.jar
-VALIDATE $? "Installing npm dependencies"
-
+mvn clean package  &>>$LOGS_FILE
+mv target/shipping-1.0.jar shipping.jar 
+VALIDATE $? "Installing dependencies"
 
 cp $SCRIPT_DIR/shipping.service /etc/systemd/system/shipping.service
-VALIDATE $? "Creating systemctl service"
+VALIDATE $? "Created systemctl service"
 
-dnf install mysql -y &>>LOG_FILE
-VALIDATE $? "Installing mysql client"
+dnf install mysql -y &>>$LOGS_FILE
+VALIDATE $? "Installing MySQL client"
 
-mysql -h mysql.learndevopskills.shop -u root -pRoboShop@1 -e "use mysql" &>>LOG_FILE
-
+mysql -h $MYSQL_HOST -u root -pRoboShop@1 -e "use cities" &>>$LOGS_FILE
 if [ $? -ne 0 ]; then
     mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/schema.sql
     mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/app-user.sql
     mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/master-data.sql
     VALIDATE $? "Data loaded"
 else
-    echo -e "Data already loaded.. $Y SKIPPING $N"
-
+    echo -e "Data already loaded ... $Y SKIPPING $N"
 fi
 
-systemctl enable shipping
+systemctl enable shipping 
 systemctl restart shipping
-VALIDATE $? "Enabling and restarting the shipping"
+VALIDATE $? "Enable and restarted shipping"
 
 
 
