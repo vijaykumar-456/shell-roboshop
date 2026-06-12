@@ -68,7 +68,7 @@ VALIDATE $? "Installing dependencies"
 cp $SCRIPT_DIR/shipping.service /etc/systemd/system/shipping.service
 VALIDATE $? "Created systemctl service"
 
-dnf install mysql -y &>>$LOGS_FILE
+dnf install mysql -y &>>$LOG_FILE
 VALIDATE $? "Installing MySQL client"
 
 mysql -h $MYSQL_HOST -u root -pRoboShop@1 -e "use cities" &>>$LOG_FILE
