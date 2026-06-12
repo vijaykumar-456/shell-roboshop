@@ -62,6 +62,7 @@ unzip /tmp/shipping.zip &>>$LOG_FILE
 VALIDATE $? "Unzipping the shipping code"
 
 mvn clean package &>> $LOG_FILE
+mv target/shipping-1.0.jar shipping.jar
 VALIDATE $? "Installing npm dependencies"
 
 
