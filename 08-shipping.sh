@@ -1,0 +1,73 @@
+#!bin/bash
+
+LOG_FOLDER='/var/log/roboshop'
+
+sudo mkdir -p $LOG_FOLDER
+
+sudo chown -R ec2-user:ec2-user $LOG_FOLDER
+
+sudo chmod -R 755 $LOG_FOLDER
+
+LOG_FILE="/$LOG_FOLDER/$0.log"
+
+SCRIPT_DIR=$PWD
+
+R="\e[31m"
+G="\e[32m"
+Y="\e[33m"
+N="\e[0m"
+
+TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S" )
+
+USER_ID=$(id -u)
+
+if [ $USER_ID -ne 0 ]; then
+    echo -e "$TIMESTAMP [ERROR] $R Please access with admin user $N" | tee -a $LOG_FILE
+    exit 1
+fi
+
+VALIDATE(){
+    if [ $1 -ne 0 ]; then
+        echo -e "$TIMESTAMP [ERROR] $2 ... $R FAILURE $N" | tee -a $LOG_FILE
+    else
+        echo -e "$TIMESTAMP [INFO] $2 ... $G SUCCESS $N" | tee -a $LOG_FILE
+    fi
+}
+
+dnf install maven -y &>>LOG_FILE
+VALIDATE $? "Installing maven"
+
+id roboshop &>> $LOG_FILE
+if [ $? -ne 0 ]; then
+    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOG_FILE
+    VALIDATE $? "Creating roboshop system user"
+else
+    echo -e "$R User Already present with this name $N ... $Y SKIPPING $N"
+fi
+
+rm -rf /app
+VALIDATE $? "Removing Existing app/code"
+
+rm -rf /tmp/shipping.zip
+VALIDATE $? "Removing Exisiting shipping"
+
+mkdir -p /app &>> $LOG_FILE
+VALIDATE $? "Creating app folder for code"
+
+curl -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip  &>>$LOG_FILE
+cd /app
+unzip /tmp/shipping.zip &>>$LOG_FILE
+VALIDATE $? "Unzipping the shipping code"
+
+mvn clean package &>> $LOG_FILE
+VALIDATE $? "Installing npm dependencies"
+
+
+cp $SCRIPT_DIR/shipping.service /etc/systemd/system/shipping.service
+VALIDATE $? "Creating systemctl service"
+
+dnf install mysql -y &>>LOG_FILE
+VALIDATE $? "Installing mysql client"
+
+
+
