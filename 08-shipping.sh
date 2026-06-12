@@ -12,6 +12,8 @@ LOG_FILE="/$LOG_FOLDER/$0.log"
 
 SCRIPT_DIR=$PWD
 
+MYSQL_HOST=mysql.learndevopskills.shop
+
 R="\e[31m"
 G="\e[32m"
 Y="\e[33m"
@@ -68,6 +70,21 @@ VALIDATE $? "Creating systemctl service"
 
 dnf install mysql -y &>>LOG_FILE
 VALIDATE $? "Installing mysql client"
+
+mysql -h mysql.learndevopskills.shop -u root -pRoboShop@1 -e "use mysql" &>>LOG_FILE
+
+if [ $? -ne 0 ]; then
+    mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/schema.sql
+    mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/app-user.sql
+    mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/master-data.sql
+    VALIDATE $? "Data loaded"
+else
+    echo -e "Data already loaded.. $Y SKIPPING $N"
+
+systemctl enable shipping
+systemctl restart shipping
+VALIDATE $? "Enabling and restarting the shipping"
+
 
 
 
