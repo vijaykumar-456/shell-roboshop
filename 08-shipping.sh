@@ -36,12 +36,12 @@ VALIDATE(){
     fi
 }
 
-dnf install maven -y &>>$LOGS_FILE
+dnf install maven -y &>>$LOG_FILE
 VALIDATE $? "Installing Maven"
 
-id roboshop &>>$LOGS_FILE
+id roboshop &>>$LOG_FILE
 if [ $? -ne 0 ]; then
-    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOGS_FILE
+    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOG_FILE
     VALIDATE $? "Creating roboshop system user"
 else
     echo -e "System user roboshop already created ... $Y SKIPPING $N"
@@ -53,15 +53,15 @@ VALIDATE $? "Removing existing code"
 rm -rf /tmp/shipping.zip
 VALIDATE $? "Removed shipping zip"
 
-mkdir -p /app  &>>$LOGS_FILE
+mkdir -p /app  &>>$LOG_FILE
 VALIDATE $? "Creating app directory"
 
-curl -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip  &>>$LOGS_FILE
+curl -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip  &>>$LOG_FILE
 cd /app 
-unzip /tmp/shipping.zip &>>$LOGS_FILE
+unzip /tmp/shipping.zip &>>$LOG_FILE
 VALIDATE $? "Downloaded and extracted shipping code"
 
-mvn clean package  &>>$LOGS_FILE
+mvn clean package  &>>$LOG_FILE
 mv target/shipping-1.0.jar shipping.jar 
 VALIDATE $? "Installing dependencies"
 
@@ -71,7 +71,7 @@ VALIDATE $? "Created systemctl service"
 dnf install mysql -y &>>$LOGS_FILE
 VALIDATE $? "Installing MySQL client"
 
-mysql -h $MYSQL_HOST -u root -pRoboShop@1 -e "use cities" &>>$LOGS_FILE
+mysql -h $MYSQL_HOST -u root -pRoboShop@1 -e "use cities" &>>$LOG_FILE
 if [ $? -ne 0 ]; then
     mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/schema.sql
     mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/app-user.sql
